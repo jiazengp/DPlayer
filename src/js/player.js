@@ -382,6 +382,7 @@ class DPlayer {
                 this.type = 'normal';
             }
 
+            const src = this.quality.url; // 真实的视频 url, 用于切换清晰度时销毁实例
             switch (this.type) {
                 // https://github.com/video-dev/hls.js
                 case 'hls':
@@ -395,6 +396,12 @@ class DPlayer {
                             this.events.on('destroy', () => {
                                 hls.destroy();
                                 delete this.plugins.hls;
+                            });
+                            // 切换清晰度时销毁实例
+                            this.events.on('quality_end', () => {
+                                if (src !== this.quality.url) {
+                                    hls.destroy();
+                                }
                             });
                         } else {
                             this.notice('Error: Hls is not supported.');
@@ -424,6 +431,14 @@ class DPlayer {
                                 flvPlayer.destroy();
                                 delete this.plugins.flvjs;
                             });
+                            // 切换清晰度时销毁实例
+                            this.events.on('quality_end', () => {
+                                if (src !== this.quality.url) {
+                                    flvPlayer.unload();
+                                    flvPlayer.detachMediaElement();
+                                    flvPlayer.destroy();
+                                }
+                            });
                         } else {
                             this.notice('Error: flvjs is not supported.');
                         }
@@ -443,6 +458,12 @@ class DPlayer {
                         this.events.on('destroy', () => {
                             window.dashjs.MediaPlayer().reset();
                             delete this.plugins.dash;
+                        });
+                        // 切换清晰度时销毁实例
+                        this.events.on('quality_end', () => {
+                            if (src !== this.quality.url) {
+                                window.dashjs.MediaPlayer().reset();
+                            }
                         });
                     } else {
                         this.notice("Error: Can't find dashjs.");
@@ -472,6 +493,13 @@ class DPlayer {
                                 client.remove(torrentId);
                                 client.destroy();
                                 delete this.plugins.webtorrent;
+                            });
+                            // 切换清晰度时销毁实例
+                            this.events.on('quality_end', () => {
+                                if (src !== this.quality.url) {
+                                    client.remove(torrentId);
+                                    client.destroy();
+                                }
                             });
                         } else {
                             this.notice('Error: Webtorrent is not supported.');

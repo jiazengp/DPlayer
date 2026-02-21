@@ -396,15 +396,56 @@ const dp = new DPlayer({
 });
 ```
 
+在使用 `customType` [配合其他 MSE 库使用](#配合其他-mse-库使用)时，需要监听 `destroy` 和 `quality_end` 事件及时销毁 MSE 库实例，避免内存泄漏
+
+```js
+const dp = new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: {
+        quality: [
+            {
+                name: 'HD',
+                url: 'demo_hd.m3u8',
+                type: 'Hls',
+            },
+            {
+                name: 'SD',
+                url: 'demo_sd.m3u8',
+                type: 'Hls',
+            },
+        ],
+        defaultQuality: 0,
+        customType: {
+            Hls: (video, player) => {
+                const hls = new window.Hls();
+                hls.loadSource(video.src);
+                hls.attachMedia(video);
+
+                hls.sessionId = crypto.randomUUID();
+                player.sessionId = hls.sessionId;
+                player.events.on('destroy', () => {
+                    hls.destroy();
+                });
+                player.events.on('quality_end', () => {
+                    if (hls.sessionId !== player.sessionId) {
+                        hls.destroy();
+                    }
+                });
+            },
+        },
+    },
+});
+```
+
 ## 弹幕
 
 ### 弹幕接口
 
 `danmaku.api`
 
-**现成的接口**
+<!-- **现成的接口**
 
-链接: https://api.prprpr.me/dplayer/
+链接: https://api.prprpr.me/dplayer/ -->
 
 每日备份: [DPlayer-data](https://github.com/DIYgod/DPlayer-data)
 

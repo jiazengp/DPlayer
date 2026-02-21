@@ -412,15 +412,56 @@ const dp = new DPlayer({
 });
 ```
 
+When using `customType` ([Work with other MSE library](#work-with-other-mse-library)), you should listen for the `destroy` and `quality_end` events to destroy the MSE library instance in a timely manner to avoid memory leaks.
+
+```js
+const dp = new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: {
+        quality: [
+            {
+                name: 'HD',
+                url: 'demo_hd.m3u8',
+                type: 'Hls',
+            },
+            {
+                name: 'SD',
+                url: 'demo_sd.m3u8',
+                type: 'Hls',
+            },
+        ],
+        defaultQuality: 0,
+        customType: {
+            Hls: (video, player) => {
+                const hls = new window.Hls();
+                hls.loadSource(video.src);
+                hls.attachMedia(video);
+
+                hls.sessionId = crypto.randomUUID();
+                player.sessionId = hls.sessionId;
+                player.events.on('destroy', () => {
+                    hls.destroy();
+                });
+                player.events.on('quality_end', () => {
+                    if (hls.sessionId !== player.sessionId) {
+                        hls.destroy();
+                    }
+                });
+            },
+        },
+    },
+});
+```
+
 ## Danmaku
 
 ### Danmaku API
 
 `danmaku.api`
 
-**Ready-made API**
+<!-- **Ready-made API**
 
-url: https://api.prprpr.me/dplayer/
+url: https://api.prprpr.me/dplayer/ -->
 
 Daily backup data: [DPlayer-data](https://github.com/DIYgod/DPlayer-data)
 
